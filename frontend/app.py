@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+from datetime import datetime
 
 API_URL = "https://python-fullstack-project-1.onrender.com"
 
@@ -54,7 +55,7 @@ def delete_student(student_id):
 def main_app():
     st.sidebar.success(f"Welcome, {st.session_state.username} 👋")
     if st.sidebar.button("Refresh"):
-        st.experimental_rerun()
+        st.experimental_set_query_params(rerun=str(datetime.now()))
 
     st.title("📚 Student Record System")
 
