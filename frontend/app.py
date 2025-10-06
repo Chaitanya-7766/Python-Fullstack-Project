@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-API_URL = "http://localhost:8080"  # Adjust if API is deployed elsewhere
+API_URL = "https://python-fullstack-project-1.onrender.com/"  # Adjust if API is deployed elsewhere
 
 st.set_page_config(page_title="Student Record System", layout="centered")
 st.title("🎓 Student Record System")
