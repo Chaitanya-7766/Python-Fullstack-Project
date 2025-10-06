@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-API_URL = "https://python-fullstack-project-1.onrender.com"  # change to your backend
+API_URL = "https://python-fullstack-project-1.onrender.com"  # your backend URL
 
 # -------- Safe JSON Response --------
 def safe_json_response(res):
@@ -38,7 +38,6 @@ if "logged_in" not in st.session_state:
 # -------- LOGIN PAGE --------
 def login_page():
     st.title("Login")
-
     user = st.text_input("Username")
     pw = st.text_input("Password", type="password")
 
@@ -46,7 +45,6 @@ def login_page():
         if user == "chaitanya" and pw == "chai123":
             st.session_state.logged_in = True
             st.success("Logged in successfully!")
-            st.experimental_rerun()  # Force rerun to show student management page
         else:
             st.error("Invalid credentials")
 
@@ -55,7 +53,6 @@ def student_page():
     st.sidebar.success("Welcome, chaitanya 👋")
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
-        st.experimental_rerun()
 
     st.title("📚 Student Record System")
 
@@ -102,7 +99,7 @@ def student_page():
             st.success(result.get("message", result.get("error", "Error deleting student")))
 
 # -------- MAIN --------
-if not st.session_state.logged_in:
-    login_page()
-else:
+if st.session_state.logged_in:
     student_page()
+else:
+    login_page()
