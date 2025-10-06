@@ -13,7 +13,11 @@ def safe_json_response(res):
 # -------- API Calls --------
 def get_students():
     res = requests.get(f"{API_URL}/students")
-    return safe_json_response(res)
+    data = safe_json_response(res)
+    # Ensure we get a list for st.table
+    if isinstance(data, dict) and "data" in data:
+        return data["data"]
+    return data
 
 def add_student(name, age, branch, year, gpa):
     res = requests.post(f"{API_URL}/students", json={
@@ -22,8 +26,9 @@ def add_student(name, age, branch, year, gpa):
     return safe_json_response(res)
 
 def update_student(student_id, gpa):
+    # Only GPA update
     res = requests.put(f"{API_URL}/students/{student_id}", json={
-        "name":"", "age":0, "branch":"", "year":0, "gpa": gpa
+        "gpa": gpa
     })
     return safe_json_response(res)
 
@@ -56,7 +61,7 @@ def student_page():
 
     st.title("📚 Student Record System")
 
-    menu = ["View Students", "Add Student", "Update Student", "Delete Student"]
+    menu = ["View Students", "Add Student", "Update Student GPA", "Delete Student"]
     choice = st.sidebar.selectbox("Menu", menu)
 
     # ----- View Students -----
@@ -79,16 +84,22 @@ def student_page():
 
         if st.button("Add"):
             result = add_student(name, age, branch, year, gpa)
-            st.success(result.get("message", result.get("error", "Error adding student")))
+            if "message" in result:
+                st.success(result["message"])
+            else:
+                st.error(result.get("error", "Error adding student"))
 
     # ----- Update Student GPA -----
-    elif choice == "Update Student":
+    elif choice == "Update Student GPA":
         st.subheader("Update Student GPA")
         student_id = st.number_input("Student ID", min_value=1, step=1)
         gpa = st.number_input("New GPA", min_value=0.0, max_value=10.0, step=0.01)
         if st.button("Update"):
             result = update_student(student_id, gpa)
-            st.success(result.get("message", result.get("error", "Error updating student")))
+            if "message" in result:
+                st.success(result["message"])
+            else:
+                st.error(result.get("error", "Error updating student"))
 
     # ----- Delete Student -----
     elif choice == "Delete Student":
@@ -96,7 +107,10 @@ def student_page():
         student_id = st.number_input("Student ID to Delete", min_value=1, step=1)
         if st.button("Delete"):
             result = delete_student(student_id)
-            st.success(result.get("message", result.get("error", "Error deleting student")))
+            if "message" in result:
+                st.success(result["message"])
+            else:
+                st.error(result.get("error", "Error deleting student"))
 
 # -------- MAIN --------
 if st.session_state.logged_in:
