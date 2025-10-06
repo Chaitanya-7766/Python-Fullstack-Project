@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from passlib.context import CryptContext
-from src.db import Database
 from src.logic import StudentManager
+from src.db import Database
 
 # --- Initialize ---
 app = FastAPI()
@@ -14,7 +14,9 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 class Student(BaseModel):
     name: str
     age: int
-    grade: str
+    branch: str
+    year: int
+    gpa: float
 
 class UserRegister(BaseModel):
     username: str
@@ -38,7 +40,10 @@ CREATE TABLE IF NOT EXISTS users (
 def register(user: UserRegister):
     hashed_pw = pwd_context.hash(user.password)
     try:
-        db.execute_query("INSERT INTO users (username, password) VALUES (?, ?)", (user.username, hashed_pw))
+        db.execute_query(
+            "INSERT INTO users (username, password) VALUES (?, ?)",
+            (user.username, hashed_pw)
+        )
         return {"message": "User registered successfully"}
     except Exception:
         raise HTTPException(status_code=400, detail="Username already exists")
@@ -61,15 +66,23 @@ def get_students():
 
 @app.post("/students")
 def add_student(student: Student):
-    student_manager.add_student(student.name, student.age, student.grade)
-    return {"message": "Student added successfully"}
+    result = student_manager.add_student(
+        student.name, student.age, student.branch, student.year, student.gpa
+    )
+    if result["Success"]:
+        return {"message": result["message"]}
+    raise HTTPException(status_code=400, detail=result["message"])
 
 @app.put("/students/{student_id}")
 def update_student(student_id: int, student: Student):
-    student_manager.update_student(student_id, student.name, student.age, student.grade)
-    return {"message": "Student updated successfully"}
+    result = student_manager.update_student_gpa(student_id, student.gpa)
+    if result["Success"]:
+        return {"message": result["message"]}
+    raise HTTPException(status_code=400, detail=result["message"])
 
 @app.delete("/students/{student_id}")
 def delete_student(student_id: int):
-    student_manager.delete_student(student_id)
-    return {"message": "Student deleted successfully"}
+    result = student_manager.delete_student(student_id)
+    if result["Success"]:
+        return {"message": result["message"]}
+    raise HTTPException(status_code=400, detail=result["message"])

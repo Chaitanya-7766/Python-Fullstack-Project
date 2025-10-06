@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-API_URL = "https://python-fullstack-project-1.onrender.com"  # change to Render backend URL after deployment
+API_URL = "https://python-fullstack-project-1.onrender.com"  # change to your Render backend
 
 # -------- Safe JSON Response --------
 def safe_json_response(res):
@@ -23,12 +23,14 @@ def get_students():
     res = requests.get(f"{API_URL}/students")
     return safe_json_response(res)
 
-def add_student(name, age, grade):
-    res = requests.post(f"{API_URL}/students", json={"name": name, "age": age, "grade": grade})
+def add_student(name, age, branch, year, gpa):
+    res = requests.post(f"{API_URL}/students", json={
+        "name": name, "age": age, "branch": branch, "year": year, "gpa": gpa
+    })
     return safe_json_response(res)
 
-def update_student(student_id, name, age, grade):
-    res = requests.put(f"{API_URL}/students/{student_id}", json={"name": name, "age": age, "grade": grade})
+def update_student(student_id, gpa):
+    res = requests.put(f"{API_URL}/students/{student_id}", json={"name":"", "age":0, "branch":"", "year":0, "gpa":gpa})
     return safe_json_response(res)
 
 def delete_student(student_id):
@@ -86,25 +88,28 @@ else:
     if choice == "View Students":
         st.subheader("All Students")
         students = get_students()
-        st.write(students)
+        if isinstance(students, list):
+            st.table(students)
+        else:
+            st.write(students)
 
     elif choice == "Add Student":
         st.subheader("Add Student")
         name = st.text_input("Name")
         age = st.number_input("Age", min_value=1, max_value=120)
-        grade = st.text_input("Grade")
+        branch = st.text_input("Branch")
+        year = st.number_input("Year", min_value=1, max_value=8)
+        gpa = st.number_input("GPA", min_value=0.0, max_value=10.0, step=0.01)
         if st.button("Add"):
-            result = add_student(name, age, grade)
+            result = add_student(name, age, branch, year, gpa)
             st.success(result.get("message", result.get("error", "Error adding student")))
 
     elif choice == "Update Student":
-        st.subheader("Update Student")
+        st.subheader("Update Student GPA")
         student_id = st.number_input("Student ID", min_value=1, step=1)
-        name = st.text_input("New Name")
-        age = st.number_input("New Age", min_value=1, max_value=120)
-        grade = st.text_input("New Grade")
+        gpa = st.number_input("New GPA", min_value=0.0, max_value=10.0, step=0.01)
         if st.button("Update"):
-            result = update_student(student_id, name, age, grade)
+            result = update_student(student_id, gpa)
             st.success(result.get("message", result.get("error", "Error updating student")))
 
     elif choice == "Delete Student":
