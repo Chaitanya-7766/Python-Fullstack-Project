@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-API_URL = "http://localhost:8080"   # change to Render backend URL after deployment
+API_URL = "https://python-fullstack-project-1.onrender.com"   # change to Render backend URL after deployment
 
 # -------- API Calls --------
 def register(username, password):
