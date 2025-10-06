@@ -1,79 +1,75 @@
-# Frontend ----> API ----> logic ----> db ----> Response
 from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import sys, os
-
-# Add src to path to import StudentManager
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from passlib.context import CryptContext
+from src.db import Database
 from src.logic import StudentManager
 
-# ------------------------------- App Setup ----------
-app = FastAPI(title="Student Record System API", version="1.0")
+# --- Initialize ---
+app = FastAPI()
+db = Database()
+student_manager = StudentManager()
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# ------------------------------- CORS Middleware ----------
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # allow all frontend apps
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
-)
-
-# ------------------------------- Student Manager Instance ----------
-student_manager = StudentManager()  # create instance
-
-# ------------------------------- Data Models ----------
-class StudentCreate(BaseModel):
+# --- Models ---
+class Student(BaseModel):
     name: str
     age: int
-    branch: str
-    year: int
-    gpa: float
+    grade: str
 
-class StudentGPAUpdate(BaseModel):
-    gpa: float
+class UserRegister(BaseModel):
+    username: str
+    password: str
 
-# ------------------------------- API Endpoints ----------
+class UserLogin(BaseModel):
+    username: str
+    password: str
 
+# --- Setup User Table ---
+db.execute_query("""
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE,
+    password TEXT
+)
+""")
+
+# ---------------- AUTH ----------------
+@app.post("/register")
+def register(user: UserRegister):
+    hashed_pw = pwd_context.hash(user.password)
+    try:
+        db.execute_query("INSERT INTO users (username, password) VALUES (?, ?)", (user.username, hashed_pw))
+        return {"message": "User registered successfully"}
+    except Exception:
+        raise HTTPException(status_code=400, detail="Username already exists")
+
+@app.post("/login")
+def login(user: UserLogin):
+    row = db.fetch_one("SELECT * FROM users WHERE username = ?", (user.username,))
+    if not row or not pwd_context.verify(user.password, row["password"]):
+        raise HTTPException(status_code=400, detail="Invalid username or password")
+    return {"message": "Login successful", "username": user.username}
+
+# ---------------- STUDENTS ----------------
 @app.get("/")
-def home():
-    """Check if API is running"""
+def root():
     return {"message": "Student Record System API is running"}
 
 @app.get("/students")
 def get_students():
-    """Get all students"""
-    result = student_manager.get_students()
-    return result
+    return student_manager.get_students()
 
 @app.post("/students")
-def create_student(student: StudentCreate):
-    """Add a new student"""
-    result = student_manager.add_student(
-        student.name, student.age, student.branch, student.year, student.gpa
-    )
-    if not result.get("Success"):
-        raise HTTPException(status_code=400, detail=result.get("message"))
-    return result
+def add_student(student: Student):
+    student_manager.add_student(student.name, student.age, student.grade)
+    return {"message": "Student added successfully"}
 
-@app.put("/students/{student_id}/gpa")
-def update_student_gpa(student_id: int, student: StudentGPAUpdate):
-    """Update a student's GPA"""
-    result = student_manager.update_student_gpa(student_id, student.gpa)
-    if not result.get("Success"):
-        raise HTTPException(status_code=400, detail=result.get("message"))
-    return result
+@app.put("/students/{student_id}")
+def update_student(student_id: int, student: Student):
+    student_manager.update_student(student_id, student.name, student.age, student.grade)
+    return {"message": "Student updated successfully"}
 
 @app.delete("/students/{student_id}")
 def delete_student(student_id: int):
-    """Delete a student"""
-    result = student_manager.delete_student(student_id)
-    if not result.get("Success"):
-        raise HTTPException(status_code=400, detail=result.get("message"))
-    return result
-
-# ------------------------------- Run ----------
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
+    student_manager.delete_student(student_id)
+    return {"message": "Student deleted successfully"}
