@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 from datetime import datetime
 
-API_URL = "https://python-fullstack-project-1.onrender.com"
+API_URL = "https://python-fullstack-project-1.onrender.com"  # backend URL
 
 # ------------------ SESSION STATE ------------------
 if "logged_in" not in st.session_state:
@@ -21,7 +21,8 @@ def login_page():
             st.session_state.logged_in = True
             st.session_state.username = username
             st.success(f"Login Successful! Welcome {username}")
-            st.experimental_rerun()
+            # Safe rerun for deployment
+            st.experimental_set_query_params(rerun=str(datetime.now()))
         else:
             st.error("Invalid credentials. Try again.")
 
@@ -62,6 +63,7 @@ def main_app():
     menu = ["View Students", "Add Student", "Update Student GPA", "Delete Student", "Logout"]
     choice = st.sidebar.selectbox("Menu", menu)
 
+    # ----- View Students -----
     if choice == "View Students":
         st.subheader("All Students")
         students = get_students()
@@ -70,6 +72,7 @@ def main_app():
         else:
             st.write("No student records available.")
 
+    # ----- Add Student -----
     elif choice == "Add Student":
         st.subheader("Add Student")
         name = st.text_input("Name")
@@ -81,6 +84,7 @@ def main_app():
             result = add_student(name, age, branch, year, gpa)
             st.success(result.get("message", result.get("error", "Error adding student")))
 
+    # ----- Update Student GPA -----
     elif choice == "Update Student GPA":
         st.subheader("Update Student GPA")
         student_id = st.number_input("Student ID", min_value=1, step=1)
@@ -89,6 +93,7 @@ def main_app():
             result = update_student(student_id, gpa)
             st.success(result.get("message", result.get("error", "Error updating student")))
 
+    # ----- Delete Student -----
     elif choice == "Delete Student":
         st.subheader("Delete Student")
         student_id = st.number_input("Student ID to Delete", min_value=1, step=1)
@@ -96,11 +101,12 @@ def main_app():
             result = delete_student(student_id)
             st.success(result.get("message", result.get("error", "Error deleting student")))
 
+    # ----- Logout -----
     elif choice == "Logout":
         st.session_state.logged_in = False
         st.session_state.username = ""
         st.success("Logged out successfully!")
-        st.experimental_rerun()
+        st.experimental_set_query_params(rerun=str(datetime.now()))
 
 # ------------------ APP FLOW ------------------
 if not st.session_state.logged_in:
