@@ -22,7 +22,6 @@ def add_student(name, age, branch, year, gpa):
     return safe_json_response(res)
 
 def update_student(student_id, gpa):
-    # Update only GPA as per backend logic
     res = requests.put(f"{API_URL}/students/{student_id}", json={
         "name":"", "age":0, "branch":"", "year":0, "gpa": gpa
     })
@@ -39,8 +38,6 @@ if "logged_in" not in st.session_state:
 # -------- LOGIN PAGE --------
 def login_page():
     st.title("Login")
-    st.write("Use the credentials below to login:")
-    st.info("Username: chaitanya | Password: chai123")
 
     user = st.text_input("Username")
     pw = st.text_input("Password", type="password")
