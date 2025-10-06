@@ -1,14 +1,9 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from passlib.context import CryptContext
 from src.logic import StudentManager
-from src.db import Database
 
-# --- Initialize ---
 app = FastAPI()
-db = Database()
 student_manager = StudentManager()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # --- Models ---
 class Student(BaseModel):
@@ -17,43 +12,6 @@ class Student(BaseModel):
     branch: str
     year: int
     gpa: float
-
-class UserRegister(BaseModel):
-    username: str
-    password: str
-
-class UserLogin(BaseModel):
-    username: str
-    password: str
-
-# --- Setup User Table ---
-db.execute_query("""
-CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE,
-    password TEXT
-)
-""")
-
-# ---------------- AUTH ----------------
-@app.post("/register")
-def register(user: UserRegister):
-    hashed_pw = pwd_context.hash(user.password)
-    try:
-        db.execute_query(
-            "INSERT INTO users (username, password) VALUES (?, ?)",
-            (user.username, hashed_pw)
-        )
-        return {"message": "User registered successfully"}
-    except Exception:
-        raise HTTPException(status_code=400, detail="Username already exists")
-
-@app.post("/login")
-def login(user: UserLogin):
-    row = db.fetch_one("SELECT * FROM users WHERE username = ?", (user.username,))
-    if not row or not pwd_context.verify(user.password, row["password"]):
-        raise HTTPException(status_code=400, detail="Invalid username or password")
-    return {"message": "Login successful", "username": user.username}
 
 # ---------------- STUDENTS ----------------
 @app.get("/")

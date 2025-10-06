@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-API_URL = "https://python-fullstack-project-1.onrender.com"  # change to your Render backend
+API_URL = "https://python-fullstack-project-1.onrender.com"  # change to your backend
 
 # -------- Safe JSON Response --------
 def safe_json_response(res):
@@ -11,14 +11,6 @@ def safe_json_response(res):
         return {"error": f"Non-JSON response: {res.text}", "status": res.status_code}
 
 # -------- API Calls --------
-def register(username, password):
-    res = requests.post(f"{API_URL}/register", json={"username": username, "password": password})
-    return safe_json_response(res)
-
-def login(username, password):
-    res = requests.post(f"{API_URL}/login", json={"username": username, "password": password})
-    return safe_json_response(res)
-
 def get_students():
     res = requests.get(f"{API_URL}/students")
     return safe_json_response(res)
@@ -40,43 +32,25 @@ def delete_student(student_id):
 # -------- Session --------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
-    st.session_state.username = None
 
 # -------- UI --------
-st.sidebar.title("Authentication")
+st.sidebar.title("Login")
 
 if not st.session_state.logged_in:
-    choice = st.sidebar.selectbox("Choose Action", ["Login", "Register"])
-
-    if choice == "Register":
-        st.title("Register")
-        user = st.text_input("Username")
-        pw = st.text_input("Password", type="password")
-        if st.button("Register"):
-            result = register(user, pw)
-            if "User registered successfully" in result.get("message", ""):
-                st.success("Registration successful. Please login.")
-            else:
-                st.error(result.get("detail", result.get("error", "Error registering user.")))
-
-    elif choice == "Login":
-        st.title("Login")
-        user = st.text_input("Username")
-        pw = st.text_input("Password", type="password")
-        if st.button("Login"):
-            result = login(user, pw)
-            if "Login successful" in result.get("message", ""):
-                st.session_state.logged_in = True
-                st.session_state.username = user
-                st.success("Logged in successfully!")
-            else:
-                st.error(result.get("detail", result.get("error", "Login failed")))
+    st.title("Login")
+    user = st.text_input("Username")
+    pw = st.text_input("Password", type="password")
+    if st.button("Login"):
+        if user == "chaitanya" and pw == "chai123":
+            st.session_state.logged_in = True
+            st.success("Logged in successfully!")
+        else:
+            st.error("Invalid credentials")
 
 else:
-    st.sidebar.success(f"Welcome, {st.session_state.username} 👋")
+    st.sidebar.success(f"Welcome, chaitanya 👋")
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
-        st.session_state.username = None
         st.experimental_rerun()
 
     # --- Student Manager UI ---
