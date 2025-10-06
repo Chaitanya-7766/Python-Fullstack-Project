@@ -22,51 +22,59 @@ def add_student(name, age, branch, year, gpa):
     return safe_json_response(res)
 
 def update_student(student_id, gpa):
-    res = requests.put(f"{API_URL}/students/{student_id}", json={"name":"", "age":0, "branch":"", "year":0, "gpa":gpa})
+    # Update only GPA as per backend logic
+    res = requests.put(f"{API_URL}/students/{student_id}", json={
+        "name":"", "age":0, "branch":"", "year":0, "gpa": gpa
+    })
     return safe_json_response(res)
 
 def delete_student(student_id):
     res = requests.delete(f"{API_URL}/students/{student_id}")
     return safe_json_response(res)
 
-# -------- Session --------
+# -------- Session State --------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# -------- UI --------
-st.sidebar.title("Login")
-
-if not st.session_state.logged_in:
+# -------- LOGIN PAGE --------
+def login_page():
     st.title("Login")
+    st.write("Use the credentials below to login:")
+    st.info("Username: chaitanya | Password: chai123")
+
     user = st.text_input("Username")
     pw = st.text_input("Password", type="password")
+
     if st.button("Login"):
         if user == "chaitanya" and pw == "chai123":
             st.session_state.logged_in = True
             st.success("Logged in successfully!")
+            st.experimental_rerun()  # Force rerun to show student management page
         else:
             st.error("Invalid credentials")
 
-else:
-    st.sidebar.success(f"Welcome, chaitanya 👋")
+# -------- STUDENT MANAGEMENT PAGE --------
+def student_page():
+    st.sidebar.success("Welcome, chaitanya 👋")
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
         st.experimental_rerun()
 
-    # --- Student Manager UI ---
     st.title("📚 Student Record System")
 
     menu = ["View Students", "Add Student", "Update Student", "Delete Student"]
     choice = st.sidebar.selectbox("Menu", menu)
 
+    # ----- View Students -----
     if choice == "View Students":
         st.subheader("All Students")
         students = get_students()
-        if isinstance(students, list):
+        if isinstance(students, list) and students:
             st.table(students)
         else:
-            st.write(students)
+            st.write("No student records available.")
 
+    # ----- Add Student -----
     elif choice == "Add Student":
         st.subheader("Add Student")
         name = st.text_input("Name")
@@ -74,10 +82,12 @@ else:
         branch = st.text_input("Branch")
         year = st.number_input("Year", min_value=1, max_value=8)
         gpa = st.number_input("GPA", min_value=0.0, max_value=10.0, step=0.01)
+
         if st.button("Add"):
             result = add_student(name, age, branch, year, gpa)
             st.success(result.get("message", result.get("error", "Error adding student")))
 
+    # ----- Update Student GPA -----
     elif choice == "Update Student":
         st.subheader("Update Student GPA")
         student_id = st.number_input("Student ID", min_value=1, step=1)
@@ -86,9 +96,16 @@ else:
             result = update_student(student_id, gpa)
             st.success(result.get("message", result.get("error", "Error updating student")))
 
+    # ----- Delete Student -----
     elif choice == "Delete Student":
         st.subheader("Delete Student")
         student_id = st.number_input("Student ID to Delete", min_value=1, step=1)
         if st.button("Delete"):
             result = delete_student(student_id)
             st.success(result.get("message", result.get("error", "Error deleting student")))
+
+# -------- MAIN --------
+if not st.session_state.logged_in:
+    login_page()
+else:
+    student_page()
