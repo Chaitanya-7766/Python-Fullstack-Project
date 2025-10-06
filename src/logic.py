@@ -31,14 +31,13 @@ class StudentManager:
     
     # --- Update GPA ------
     def update_student_gpa(self, student_id, gpa):
-        '''
-        Update only the GPA of a student
-        '''
-        result = db.update_student(student_id, {"gpa": gpa})
+
+        result = db.update_student(student_id, gpa)   # ✅ pass gpa directly, not dict
         if result.data:
             return {"Success": True, "message": "Student GPA updated successfully", "student": result.data}
         else:
             return {"Success": False, "message": f"Error: {result.error}"}
+
     
     # --- Delete ------
     def delete_student(self, student_id):
